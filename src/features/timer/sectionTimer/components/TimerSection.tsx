@@ -1,27 +1,31 @@
 import { Box } from '@mui/material'
-/** @jsxImportSource @emotion/react */
 import { useEffect, useState } from 'react'
-import Button from './Button'
-import Countdown from './Countdown'
-import InputField from './inputField'
+import SectionButton from './SectionButton'
+import SectionCountdown from './SectionCountdown'
+import SectionInputField from './SectionInputField'
 
-function TimerTitle() {
+interface TimerSectionProps {
+  totalSeconds: number
+  setTotalSeconds: React.Dispatch<React.SetStateAction<number>>
+}
+
+function TimerSection({ totalSeconds, setTotalSeconds }: TimerSectionProps) {
   const [minutes, setMinutes] = useState<string>('0')
   const [seconds, setSeconds] = useState<string>('0')
-  const [totalSeconds, setTotalSeconds] = useState<number>(0)
+  const [sectionTotalSeconds, setSectionTotalSeconds] = useState<number>(0)
   const [isActive, setIsActive] = useState<boolean>(false)
   const [intervalId, setIntervalId] = useState<NodeJS.Timeout | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     let id: NodeJS.Timeout | null = null
-    if (isActive && totalSeconds > 0) {
+    if (isActive && sectionTotalSeconds > 0) {
       id = setInterval(() => {
-        setTotalSeconds(seconds => seconds - 1)
+        setSectionTotalSeconds(seconds => seconds - 1)
       }, 1000)
       setIntervalId(id)
     }
-    else if (totalSeconds === 0 && isActive) {
+    else if (sectionTotalSeconds === 0 && isActive) {
       clearInterval(intervalId as NodeJS.Timeout)
       setIsActive(false)
     }
@@ -29,27 +33,36 @@ function TimerTitle() {
       if (id)
         clearInterval(id)
     }
-  }, [isActive, totalSeconds, intervalId])
+  }, [isActive, sectionTotalSeconds])
 
   const toggleActive = () => {
     setIsActive(!isActive)
   }
 
-  const handleStart = () => {
+  const handleSet = () => {
     const totalSec = Number.parseInt(minutes) * 60 + Number.parseInt(seconds)
     if (!Number.isNaN(totalSec) && totalSec >= 0) {
-      setTotalSeconds(totalSec)
-      setIsActive(true)
-      setErrorMessage(null)
+      if (totalSeconds !== 1 && totalSeconds >= totalSec) {
+        setSectionTotalSeconds(totalSec)
+        setErrorMessage(null)
+        setTotalSeconds(totalSeconds - totalSec)
+      }
+      else {
+        setErrorMessage('Please set Titletimer!')
+      }
     }
     else {
       setErrorMessage('Invalid time input!')
     }
   }
 
+  const handleStart = () => {
+    setIsActive(true)
+  }
+
   const handleReset = () => {
     setIsActive(false)
-    setTotalSeconds(Number.parseInt(minutes) * 60 + Number.parseInt(seconds))
+    setSectionTotalSeconds(Number.parseInt(minutes) * 60 + Number.parseInt(seconds))
   }
 
   const handleMinutesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,24 +77,25 @@ function TimerTitle() {
     <Box sx={{ textAlign: 'center', marginTop: '20px' }}>
 
       {errorMessage && <Box sx={{ color: 'red', marginTop: '20px' }}>{errorMessage}</Box>}
-      <InputField
+      <SectionInputField
         minutes={minutes}
         seconds={seconds}
         handleMinutesChange={handleMinutesChange}
         handleSecondsChange={handleSecondsChange}
       />
-      <Button
+      <SectionButton
         isActive={isActive}
         toggleActive={toggleActive}
         handleStart={handleStart}
         handleReset={handleReset}
-        totalSeconds={totalSeconds}
+        sectionTotalSeconds={sectionTotalSeconds}
+        handleSet={handleSet}
       />
-      <Countdown
-        totalSeconds={totalSeconds}
+      <SectionCountdown
+        sectionTotalSeconds={sectionTotalSeconds}
       />
     </Box>
   )
 }
 
-export default TimerTitle
+export default TimerSection
